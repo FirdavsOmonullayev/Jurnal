@@ -347,3 +347,7 @@ async function renderAdminGroupDetail(container, groupId, refreshApp) {
     refreshApp();
   }
 }
+
+if (typeof window !== 'undefined') {
+  window.renderAdminView = renderAdminView;
+}

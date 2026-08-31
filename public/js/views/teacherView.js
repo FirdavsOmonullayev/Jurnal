@@ -228,3 +228,7 @@ async function renderTeacherAssignmentDetail(container, assignmentId, groupId, r
     refreshApp();
   }
 }
+
+if (typeof window !== 'undefined') {
+  window.renderTeacherView = renderTeacherView;
+}

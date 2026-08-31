@@ -208,3 +208,7 @@ function readFileAsDataUrl(file) {
     reader.readAsDataURL(file);
   });
 }
+
+if (typeof window !== 'undefined') {
+  window.renderStudentView = renderStudentView;
+}

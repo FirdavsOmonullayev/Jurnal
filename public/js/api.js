@@ -56,3 +56,7 @@ export const api = {
     submitAssignment: (payload) => request('/student/submit', { method: 'POST', body: JSON.stringify(payload) })
   }
 };
+
+if (typeof window !== 'undefined') {
+  window.api = api;
+}

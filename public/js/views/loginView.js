@@ -137,3 +137,7 @@ export async function renderLoginView(onSuccess) {
     }
   }
 }
+
+if (typeof window !== 'undefined') {
+  window.renderLoginView = renderLoginView;
+}

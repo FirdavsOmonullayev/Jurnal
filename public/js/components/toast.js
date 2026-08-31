@@ -19,3 +19,8 @@ export function escapeHtml(str) {
     "'": '&#39;'
   }[c]));
 }
+
+if (typeof window !== 'undefined') {
+  window.showToast = showToast;
+  window.escapeHtml = escapeHtml;
+}

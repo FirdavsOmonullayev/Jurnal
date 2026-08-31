@@ -39,3 +39,11 @@ export function setView(screen, params = {}) {
   state.view.groupId = params.groupId || null;
   state.view.assignmentId = params.assignmentId || null;
 }
+
+// Bind to window for universal browser module compatibility
+if (typeof window !== 'undefined') {
+  window.state = state;
+  window.saveSession = saveSession;
+  window.setRoleTab = setRoleTab;
+  window.setView = setView;
+}
