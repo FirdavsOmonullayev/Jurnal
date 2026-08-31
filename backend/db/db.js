@@ -1,12 +1,6 @@
 const fs = require('fs');
 const path = require('path');
 
-const LOCAL_DB_DIR = path.join(__dirname, '../data');
-const LOCAL_DB_FILE = path.join(LOCAL_DB_DIR, 'db.json');
-
-const IS_VERCEL = !!process.env.VERCEL;
-const VERCEL_TMP_FILE = '/tmp/db.json';
-
 const INITIAL_DATA = {
   admin: null,
   teachers: [],
@@ -16,60 +10,70 @@ const INITIAL_DATA = {
   submissions: []
 };
 
-function getDbFilePath() {
-  if (IS_VERCEL) {
-    return VERCEL_TMP_FILE;
-  }
-  return LOCAL_DB_FILE;
+// Global in-memory singleton for serverless persistence across warm invocations
+if (!global._JURNAL_DB_CACHE) {
+  global._JURNAL_DB_CACHE = null;
 }
 
-function initDb() {
-  const targetFile = getDbFilePath();
+function loadInitialData() {
+  const possiblePaths = [
+    path.join(__dirname, '../data/db.json'),
+    path.join(process.cwd(), 'backend/data/db.json'),
+    path.join(process.cwd(), 'data/db.json'),
+    '/tmp/db.json'
+  ];
 
-  if (IS_VERCEL) {
-    if (!fs.existsSync(targetFile)) {
-      if (fs.existsSync(LOCAL_DB_FILE)) {
-        try {
-          const raw = fs.readFileSync(LOCAL_DB_FILE, 'utf8');
-          fs.writeFileSync(targetFile, raw, 'utf8');
-          return;
-        } catch (e) {}
+  for (const filePath of possiblePaths) {
+    try {
+      if (fs.existsSync(filePath)) {
+        const content = fs.readFileSync(filePath, 'utf8');
+        const parsed = JSON.parse(content);
+        if (parsed && typeof parsed === 'object') {
+          // Ensure all required top-level keys exist
+          return {
+            admin: parsed.admin || null,
+            teachers: parsed.teachers || [],
+            groups: parsed.groups || [],
+            students: parsed.students || [],
+            assignments: parsed.assignments || [],
+            submissions: parsed.submissions || []
+          };
+        }
       }
-      fs.writeFileSync(targetFile, JSON.stringify(INITIAL_DATA, null, 2), 'utf8');
-    }
-    return;
+    } catch (e) {}
   }
 
-  if (!fs.existsSync(LOCAL_DB_DIR)) {
-    fs.mkdirSync(LOCAL_DB_DIR, { recursive: true });
-  }
-  if (!fs.existsSync(LOCAL_DB_FILE)) {
-    fs.writeFileSync(LOCAL_DB_FILE, JSON.stringify(INITIAL_DATA, null, 2), 'utf8');
-  }
+  return JSON.parse(JSON.stringify(INITIAL_DATA));
 }
 
 function getData() {
-  initDb();
-  const targetFile = getDbFilePath();
-  try {
-    const raw = fs.readFileSync(targetFile, 'utf8');
-    return JSON.parse(raw);
-  } catch (error) {
-    console.error('Error reading db file:', error);
-    return { ...INITIAL_DATA };
+  if (!global._JURNAL_DB_CACHE) {
+    global._JURNAL_DB_CACHE = loadInitialData();
   }
+  return global._JURNAL_DB_CACHE;
 }
 
 function saveData(data) {
-  initDb();
-  const targetFile = getDbFilePath();
-  try {
-    fs.writeFileSync(targetFile, JSON.stringify(data, null, 2), 'utf8');
-    return true;
-  } catch (error) {
-    console.error('Error saving db file:', error);
-    return false;
+  global._JURNAL_DB_CACHE = data;
+
+  const targetPaths = [
+    '/tmp/db.json',
+    path.join(__dirname, '../data/db.json'),
+    path.join(process.cwd(), 'backend/data/db.json')
+  ];
+
+  for (const p of targetPaths) {
+    try {
+      const dir = path.dirname(p);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+      fs.writeFileSync(p, JSON.stringify(data, null, 2), 'utf8');
+    } catch (e) {
+      // Ignore read-only filesystem errors in serverless environments
+    }
   }
+  return true;
 }
 
 function uid() {

@@ -18,6 +18,12 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/teacher', teacherRoutes);
 app.use('/api/student', studentRoutes);
 
+// Global Error Handler to prevent FUNCTION_INVOCATION_FAILED
+app.use((err, req, res, next) => {
+  console.error('API Error:', err);
+  res.status(500).json({ error: err.message || 'Serverda ichki xatolik yuz berdi' });
+});
+
 app.all('*', (req, res) => {
   res.status(404).json({ error: 'API endpoint topilmadi' });
 });
