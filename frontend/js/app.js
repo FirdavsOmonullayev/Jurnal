@@ -5,33 +5,17 @@ import { renderTeacherView } from './views/teacherView.js';
 import { renderStudentView } from './views/studentView.js';
 import { escapeHtml } from './components/toast.js';
 
-function getActiveSession() {
-  if (typeof state !== 'undefined' && state && state.session) return state.session;
-  if (typeof window !== 'undefined' && window.state && window.state.session) return window.state.session;
-  try {
-    const raw = localStorage.getItem('jurnal_session');
-    return raw ? JSON.parse(raw) : null;
-  } catch (e) {
-    return null;
-  }
-}
-
 export function renderApp() {
   const appContainer = document.getElementById('app');
   if (!appContainer) return;
 
-  const currentSession = getActiveSession();
-
-  if (!currentSession) {
-    const loginFn = typeof renderLoginView === 'function' ? renderLoginView : (window.renderLoginView || function(){});
-    loginFn(renderApp);
+  if (!state.session) {
+    renderLoginView(renderApp);
     return;
   }
 
-  const role = currentSession.role;
+  const role = state.session.role;
   const roleLabel = role === 'admin' ? 'CEO / Admin' : role === 'teacher' ? "O'qituvchi" : "O'quvchi";
-
-  const safeEscape = typeof escapeHtml === 'function' ? escapeHtml : (window.escapeHtml || function(s){ return s || ''; });
 
   appContainer.innerHTML = `
     <div class="topbar">
@@ -40,7 +24,7 @@ export function renderApp() {
         <span>uyga vazifalar nazorati</span>
       </div>
       <div class="who">
-        <span>${roleLabel} — <b>${safeEscape(currentSession.name)}</b></span>
+        <span>${roleLabel} — <b>${escapeHtml(state.session.name)}</b></span>
         <button class="btn-ghost btn-small" id="logoutBtn">Chiqish</button>
       </div>
     </div>
@@ -48,43 +32,26 @@ export function renderApp() {
   `;
 
   document.getElementById('brandHomeBtn').onclick = () => {
-    if (typeof setView === 'function') setView('home');
-    else if (window.setView) window.setView('home');
+    setView('home');
     renderApp();
   };
 
   document.getElementById('logoutBtn').onclick = () => {
-    if (typeof saveSession === 'function') saveSession(null);
-    else if (window.saveSession) window.saveSession(null);
-
-    if (typeof setRoleTab === 'function') setRoleTab('student');
-    else if (window.setRoleTab) window.setRoleTab('student');
-
-    if (typeof setView === 'function') setView('home');
-    else if (window.setView) window.setView('home');
-
+    saveSession(null);
+    setRoleTab('student');
+    setView('home');
     renderApp();
   };
 
   if (role === 'admin') {
-    const fn = typeof renderAdminView === 'function' ? renderAdminView : (window.renderAdminView || function(){});
-    fn(renderApp);
+    renderAdminView(renderApp);
   } else if (role === 'teacher') {
-    const fn = typeof renderTeacherView === 'function' ? renderTeacherView : (window.renderTeacherView || function(){});
-    fn(renderApp);
+    renderTeacherView(renderApp);
   } else if (role === 'student') {
-    const fn = typeof renderStudentView === 'function' ? renderStudentView : (window.renderStudentView || function(){});
-    fn(renderApp);
+    renderStudentView(renderApp);
   }
 }
 
-// Boot application when DOM is ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', renderApp);
-} else {
+document.addEventListener('DOMContentLoaded', () => {
   renderApp();
-}
-
-if (typeof window !== 'undefined') {
-  window.renderApp = renderApp;
-}
+});
