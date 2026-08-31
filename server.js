@@ -14,26 +14,29 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
+// API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/teacher', teacherRoutes);
 app.use('/api/student', studentRoutes);
 
-const publicDir = path.join(__dirname, 'public');
-app.use(express.static(publicDir));
+// Serve static frontend files from root directory
+app.use(express.static(__dirname));
 
 app.get('*', (req, res) => {
   if (!req.path.startsWith('/api')) {
-    res.sendFile(path.join(publicDir, 'index.html'));
+    res.sendFile(path.join(__dirname, 'index.html'));
   } else {
     res.status(404).json({ error: 'API topilmadi' });
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`=================================`);
-  console.log(`Server ishlamoqda: http://localhost:${PORT}`);
-  console.log(`=================================`);
-});
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`=================================`);
+    console.log(`Server ishlamoqda: http://localhost:${PORT}`);
+    console.log(`=================================`);
+  });
+}
 
 module.exports = app;
