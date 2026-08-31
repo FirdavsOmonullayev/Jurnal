@@ -14,7 +14,14 @@ async function request(endpoint, options = {}) {
 
   try {
     const response = await fetch(url, config);
-    const data = await response.json();
+    const text = await response.text();
+    
+    let data;
+    try {
+      data = text ? JSON.parse(text) : {};
+    } catch (parseErr) {
+      throw new Error("Server xatosi: " + (text.slice(0, 100) || "Serverdan yaroqsiz javob keldi"));
+    }
 
     if (!response.ok) {
       throw new Error(data.error || 'Serverda xatolik yuz berdi');
