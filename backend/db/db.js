@@ -10,41 +10,55 @@ const INITIAL_DATA = {
   submissions: []
 };
 
-// Global in-memory singleton for serverless persistence across warm invocations
 if (!global._JURNAL_DB_CACHE) {
   global._JURNAL_DB_CACHE = null;
 }
 
-function loadInitialData() {
-  try {
-    const possiblePaths = [
-      path.join(__dirname, '../data/db.json'),
-      path.join(process.cwd(), 'backend/data/db.json'),
-      path.join(process.cwd(), 'data/db.json'),
-      '/tmp/db.json'
-    ];
+function getSafeCandidatePaths() {
+  const list = ['/tmp/db.json'];
 
-    for (const filePath of possiblePaths) {
-      try {
-        if (filePath && fs.existsSync(filePath)) {
-          const content = fs.readFileSync(filePath, 'utf8');
-          if (content) {
-            const parsed = JSON.parse(content);
-            if (parsed && typeof parsed === 'object') {
-              return {
-                admin: parsed.admin || null,
-                teachers: Array.isArray(parsed.teachers) ? parsed.teachers : [],
-                groups: Array.isArray(parsed.groups) ? parsed.groups : [],
-                students: Array.isArray(parsed.students) ? parsed.students : [],
-                assignments: Array.isArray(parsed.assignments) ? parsed.assignments : [],
-                submissions: Array.isArray(parsed.submissions) ? parsed.submissions : []
-              };
-            }
+  try {
+    const cwd = process.cwd();
+    if (cwd) {
+      list.push(path.join(cwd, 'backend', 'data', 'db.json'));
+      list.push(path.join(cwd, 'db.json'));
+    }
+  } catch (e) {}
+
+  try {
+    if (__dirname) {
+      list.push(path.join(__dirname, 'db.json'));
+    }
+  } catch (e) {}
+
+  return list;
+}
+
+function loadInitialData() {
+  const candidatePaths = getSafeCandidatePaths();
+
+  for (const filePath of candidatePaths) {
+    try {
+      if (filePath && fs.existsSync(filePath)) {
+        const content = fs.readFileSync(filePath, 'utf8');
+        if (content) {
+          const parsed = JSON.parse(content);
+          if (parsed && typeof parsed === 'object') {
+            return {
+              admin: parsed.admin || null,
+              teachers: Array.isArray(parsed.teachers) ? parsed.teachers : [],
+              groups: Array.isArray(parsed.groups) ? parsed.groups : [],
+              students: Array.isArray(parsed.students) ? parsed.students : [],
+              assignments: Array.isArray(parsed.assignments) ? parsed.assignments : [],
+              submissions: Array.isArray(parsed.submissions) ? parsed.submissions : []
+            };
           }
         }
-      } catch (e) {}
+      }
+    } catch (e) {
+      // Ignore path resolution/read errors safely
     }
-  } catch (err) {}
+  }
 
   return JSON.parse(JSON.stringify(INITIAL_DATA));
 }
@@ -65,20 +79,18 @@ function saveData(data) {
     const validData = data || JSON.parse(JSON.stringify(INITIAL_DATA));
     global._JURNAL_DB_CACHE = validData;
 
-    const targetPaths = [
-      '/tmp/db.json',
-      path.join(__dirname, '../data/db.json'),
-      path.join(process.cwd(), 'backend/data/db.json')
-    ];
+    const candidatePaths = getSafeCandidatePaths();
 
-    for (const p of targetPaths) {
+    for (const p of candidatePaths) {
       try {
         const dir = path.dirname(p);
         if (!fs.existsSync(dir)) {
           fs.mkdirSync(dir, { recursive: true });
         }
         fs.writeFileSync(p, JSON.stringify(validData, null, 2), 'utf8');
-      } catch (e) {}
+      } catch (e) {
+        // Ignore read-only filesystem errors in serverless environments
+      }
     }
     return true;
   } catch (e) {
