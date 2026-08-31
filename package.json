@@ -2,9 +2,9 @@
   "name": "jurnal-uyga-vazifalar",
   "version": "1.0.0",
   "description": "Uyga vazifalar nazorat tizimi",
-  "main": "backend/server.js",
+  "main": "server.js",
   "scripts": {
-    "start": "node backend/server.js",
+    "start": "node server.js",
     "build": "echo 'Build completed'"
   },
   "dependencies": {
