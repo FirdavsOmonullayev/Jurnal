@@ -19,13 +19,16 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/teacher', teacherRoutes);
 app.use('/api/student', studentRoutes);
 
-// Static frontend files
-const frontendDir = path.join(__dirname, '../frontend');
-app.use(express.static(frontendDir));
+// Serve static public folder for local fallback
+const publicDir = path.join(__dirname, '../public');
+app.use(express.static(publicDir));
 
-// Fallback to index.html for SPA frontend routing
 app.get('*', (req, res) => {
-  res.sendFile(path.join(frontendDir, 'index.html'));
+  if (!req.path.startsWith('/api')) {
+    res.sendFile(path.join(publicDir, 'index.html'));
+  } else {
+    res.status(404).json({ error: 'API topilmadi' });
+  }
 });
 
 module.exports = app;
