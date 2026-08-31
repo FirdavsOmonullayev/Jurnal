@@ -95,8 +95,10 @@ function isUsernameTaken(db, username) {
   return false;
 }
 
+const router = express.Router();
+
 // ----------------- AUTH ROUTES -----------------
-app.get('/api/auth/status', (req, res) => {
+router.get('/auth/status', (req, res) => {
   try {
     const db = getData();
     return res.json({ hasAdmin: !!db.admin });
@@ -105,7 +107,7 @@ app.get('/api/auth/status', (req, res) => {
   }
 });
 
-app.post('/api/auth/setup-admin', (req, res) => {
+router.post('/auth/setup-admin', (req, res) => {
   try {
     const db = getData();
     if (db.admin) {
@@ -139,7 +141,7 @@ app.post('/api/auth/setup-admin', (req, res) => {
   }
 });
 
-app.post('/api/auth/login', (req, res) => {
+router.post('/auth/login', (req, res) => {
   try {
     const { role, username, password } = req.body;
     if (!role || !username || !password) {
@@ -188,7 +190,7 @@ app.post('/api/auth/login', (req, res) => {
 });
 
 // ----------------- ADMIN ROUTES -----------------
-app.get('/api/admin/dashboard', (req, res) => {
+router.get('/admin/dashboard', (req, res) => {
   try {
     const db = getData();
 
@@ -242,7 +244,7 @@ app.get('/api/admin/dashboard', (req, res) => {
   }
 });
 
-app.post('/api/admin/teachers', (req, res) => {
+router.post('/admin/teachers', (req, res) => {
   try {
     const db = getData();
     const { name, username, password } = req.body;
@@ -271,7 +273,7 @@ app.post('/api/admin/teachers', (req, res) => {
   }
 });
 
-app.delete('/api/admin/teachers/:id', (req, res) => {
+router.delete('/admin/teachers/:id', (req, res) => {
   try {
     const db = getData();
     const id = req.params.id;
@@ -288,7 +290,7 @@ app.delete('/api/admin/teachers/:id', (req, res) => {
   }
 });
 
-app.post('/api/admin/groups', (req, res) => {
+router.post('/admin/groups', (req, res) => {
   try {
     const db = getData();
     const { name, teacherId } = req.body;
@@ -311,7 +313,7 @@ app.post('/api/admin/groups', (req, res) => {
   }
 });
 
-app.delete('/api/admin/groups/:id', (req, res) => {
+router.delete('/admin/groups/:id', (req, res) => {
   try {
     const db = getData();
     const id = req.params.id;
@@ -329,7 +331,7 @@ app.delete('/api/admin/groups/:id', (req, res) => {
   }
 });
 
-app.post('/api/admin/students', (req, res) => {
+router.post('/admin/students', (req, res) => {
   try {
     const db = getData();
     const { name, groupId, username, password } = req.body;
@@ -359,7 +361,7 @@ app.post('/api/admin/students', (req, res) => {
   }
 });
 
-app.delete('/api/admin/students/:id', (req, res) => {
+router.delete('/admin/students/:id', (req, res) => {
   try {
     const db = getData();
     const id = req.params.id;
@@ -374,7 +376,7 @@ app.delete('/api/admin/students/:id', (req, res) => {
   }
 });
 
-app.get('/api/admin/groups/:id', (req, res) => {
+router.get('/admin/groups/:id', (req, res) => {
   try {
     const db = getData();
     const groupId = req.params.id;
@@ -417,7 +419,7 @@ app.get('/api/admin/groups/:id', (req, res) => {
 });
 
 // ----------------- TEACHER ROUTES -----------------
-app.get('/api/teacher/dashboard', (req, res) => {
+router.get('/teacher/dashboard', (req, res) => {
   try {
     const teacherId = req.query.teacherId;
     if (!teacherId) return res.status(400).json({ error: 'Teacher ID required' });
@@ -460,7 +462,7 @@ app.get('/api/teacher/dashboard', (req, res) => {
   }
 });
 
-app.post('/api/teacher/assignments', (req, res) => {
+router.post('/teacher/assignments', (req, res) => {
   try {
     const db = getData();
     const { groupId, title, desc, dueDate } = req.body;
@@ -485,7 +487,7 @@ app.post('/api/teacher/assignments', (req, res) => {
   }
 });
 
-app.delete('/api/teacher/assignments/:id', (req, res) => {
+router.delete('/teacher/assignments/:id', (req, res) => {
   try {
     const db = getData();
     const id = req.params.id;
@@ -500,7 +502,7 @@ app.delete('/api/teacher/assignments/:id', (req, res) => {
   }
 });
 
-app.get('/api/teacher/assignments/:assignmentId/group/:groupId', (req, res) => {
+router.get('/teacher/assignments/:assignmentId/group/:groupId', (req, res) => {
   try {
     const db = getData();
     const { assignmentId, groupId } = req.params;
@@ -538,7 +540,7 @@ app.get('/api/teacher/assignments/:assignmentId/group/:groupId', (req, res) => {
   }
 });
 
-app.post('/api/teacher/grade', (req, res) => {
+router.post('/teacher/grade', (req, res) => {
   try {
     const db = getData();
     const { assignmentId, studentId, grade, feedback } = req.body;
@@ -574,7 +576,7 @@ app.post('/api/teacher/grade', (req, res) => {
 });
 
 // ----------------- STUDENT ROUTES -----------------
-app.get('/api/student/dashboard', (req, res) => {
+router.get('/student/dashboard', (req, res) => {
   try {
     const studentId = req.query.studentId;
     if (!studentId) return res.status(400).json({ error: 'Student ID required' });
@@ -616,7 +618,7 @@ app.get('/api/student/dashboard', (req, res) => {
   }
 });
 
-app.post('/api/student/submit', (req, res) => {
+router.post('/student/submit', (req, res) => {
   try {
     const db = getData();
     const { assignmentId, studentId, text, media, videoLink } = req.body;
@@ -659,6 +661,10 @@ app.post('/api/student/submit', (req, res) => {
     return res.status(500).json({ error: e.message || 'Serverda xatolik yuz berdi' });
   }
 });
+
+// Mount router on BOTH /api and / to handle Vercel rewrites seamlessly
+app.use('/api', router);
+app.use('/', router);
 
 app.use((err, req, res, next) => {
   console.error('Unhandled API Error:', err);
