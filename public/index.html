@@ -12,8 +12,17 @@
   
   <link rel="stylesheet" href="css/style.css">
   <script>
-    // Universal Browser Compatibility Shim for Vercel Transpiled Modules
+    // Universal Browser & Vercel Transpilation Shim
     window.exports = window.exports || {};
+    window.state = window.state || {
+      session: (function(){
+        try {
+          var raw = localStorage.getItem('jurnal_session');
+          return raw ? JSON.parse(raw) : null;
+        } catch(e) { return null; }
+      })(),
+      view: { roleTab: 'student', screen: 'home', groupId: null, assignmentId: null }
+    };
     window.require = window.require || function(mod) { return window; };
   </script>
 </head>
@@ -21,6 +30,6 @@
   <div id="app"></div>
   <div class="toast" id="toast"></div>
 
-  <script type="module" src="js/app.js"></script>
+  <script type="module" src="js/app.js?v=2"></script>
 </body>
 </html>
