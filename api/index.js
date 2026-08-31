@@ -13,19 +13,19 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
+// API Endpoints
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/teacher', teacherRoutes);
 app.use('/api/student', studentRoutes);
 
-app.use(express.static(path.join(__dirname, '../frontend')));
+// Static frontend files
+const frontendDir = path.join(__dirname, '../frontend');
+app.use(express.static(frontendDir));
 
+// Fallback to index.html for SPA frontend routing
 app.get('*', (req, res) => {
-  if (!req.path.startsWith('/api')) {
-    res.sendFile(path.join(__dirname, '../frontend/index.html'));
-  } else {
-    res.status(404).json({ error: 'API topilmadi' });
-  }
+  res.sendFile(path.join(frontendDir, 'index.html'));
 });
 
 module.exports = app;
